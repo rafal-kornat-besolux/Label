@@ -6,6 +6,14 @@ import os
 from .Template_Label.Label_universal_10x15 import labels_10x15
 from .Template_Label.Label_universal_10x5 import labels_10x5
 
+width_A4 = 595
+height_A4 = 841
+
+pathClient={
+        "VP":"VP",
+        "BZC":"BZC/campaign"
+    }
+
 def combining_universal_10x20(writer,setOfDataLabel):
     for i in setOfDataLabel:
             pdf=labels_10x15(i)
@@ -30,7 +38,7 @@ def combining_universal_10x20(writer,setOfDataLabel):
 
 
             translated_page = PageObject.createBlankPage(
-                None, 100, 195)
+                None, heightPage1, widthPage1+heightPage2)
             translated_page.mergeRotatedScaledTranslatedPage(
                 page_10x15, 90, 1, heightPage1, heightPage2)
             translated_page.mergeRotatedScaledTranslatedPage(
@@ -39,9 +47,66 @@ def combining_universal_10x20(writer,setOfDataLabel):
             writer.addPage(translated_page)
     return(writer)
 
-def combining_dropshiping_10x20(writer, setOfDataLabel, campaign):
+def combining_universal_A4(writer, setOfDataLabel):
     
-    path = "working_labels/VP" +"\\"+ campaign+"\\"+"pdf"
+    counter = 0
+    for i in setOfDataLabel:
+
+        pdf=labels_10x15(i)
+        pdf.output("working_labels/10x15"+"\\"+"10x15 "+str(i.uniqueBesoCode)+".pdf")
+
+        reader1 = PdfFileReader(
+                open("working_labels/10x15"+"\\"+"10x15 "+str(i.uniqueBesoCode)+".pdf",'rb'))
+
+        page_10x15 = reader1.getPage(0)
+        widthPage1 = page_10x15.mediaBox.getWidth()
+        heightPage1 = page_10x15.mediaBox.getHeight()
+        
+        pdf=labels_10x5(i)
+        pdf.output("working_labels/10x5"+"\\"+"10x5 "+str(i.uniqueBesoCode)+".pdf")
+
+        reader2 = PdfFileReader(
+            open("working_labels/10x5"+"\\"+"10x5 "+str(i.uniqueBesoCode)+".pdf", 'rb'))
+
+        page_10x5 = reader2.getPage(0)
+        heightPage2 = page_10x5.mediaBox.getHeight()
+        widthPage2 = page_10x5.mediaBox.getWidth()
+        
+        reader1=None
+
+        
+        
+            
+        # widthPage1 = page_10x15.mediaBox.getWidth()
+        # heightPage1 = page_10x15.mediaBox.getHeight()
+
+        if counter % 2 == 0:
+            
+            translated_page = PageObject.createBlankPage(
+                None, height_A4, width_A4)
+            translated_page.mergeRotatedScaledTranslatedPage(
+                page_10x15, 0, 1, 75, heightPage2)
+            translated_page.mergeRotatedScaledTranslatedPage(
+                page_10x5, 0, 1, 75, 0)
+
+            if counter == len(setOfDataLabel)-1:
+                writer.addPage(translated_page)
+
+        elif counter % 2 == 1:
+
+
+            translated_page.mergeRotatedScaledTranslatedPage(
+                page_10x15, 0, 1, height_A4 - widthPage2-75,  heightPage2)
+            translated_page.mergeRotatedScaledTranslatedPage(
+                page_10x5, 0, 1, height_A4 - widthPage2-75, 0)
+
+            writer.addPage(translated_page)
+        counter += 1
+    return writer
+
+def combining_dropshiping_10x20(writer, setOfDataLabel, campaign, client):
+    
+    path = "working_labels"+"\\"+ pathClient[client]+"\\"+ campaign+"\\"+"pdf"
     list_files = os.listdir(path)
     
     for i in setOfDataLabel:
@@ -82,11 +147,9 @@ def combining_dropshiping_10x20(writer, setOfDataLabel, campaign):
         writer.addPage(translated_page)
     return(writer)
 
-def combining_dropshiping_A4(writer, setOfDataLabel, campaign):
-    width_A4 = 595
-    height_A4 = 841
+def combining_dropshiping_A4(writer, setOfDataLabel, campaign, client):
 
-    path = "working_labels/VP" +"\\"+ campaign+"\\"+"pdf"
+    path = "working_labels"+"\\"+ pathClient[client]+"\\"+ campaign+"\\"+"pdf"
     list_files = os.listdir(path)
     counter = 0
     for i in setOfDataLabel:
@@ -143,3 +206,4 @@ def combining_dropshiping_A4(writer, setOfDataLabel, campaign):
             writer.addPage(translated_page)
         counter += 1
     return writer
+

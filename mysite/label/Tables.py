@@ -1,7 +1,13 @@
 import django_tables2 as tables
 from django_tables2.utils import A
-from .models import Order, OrderProduct, Package
+from .models import Furniture, Order, OrderProduct, Package
 
+class FurnitureTable(tables.Table):
+    class Meta:
+        model = Furniture
+        template_name = "django_tables2/bootstrap-responsive.html"
+        fields = ('besoRef','factoryRef', 'brand','ean','fabric', 'color','full','legsPlacement', 'packagesQuantity',)
+        
 class OrderTable(tables.Table):
     # download = DownloadLinkColumn('downloadexcel', text='Download', args=[A("pk")], orderable=False)
     # summary = tables.LinkColumn('offerdetail', text='Summary', args=[A("pk")], orderable=False)
@@ -12,7 +18,7 @@ class OrderTable(tables.Table):
     class Meta:
         model = Order
         template_name = "django_tables2/bootstrap-responsive.html"
-        fields = ('name','description', 'country',)
+        fields = ('name','description', 'country','is_made' ,)
 
 class OrderProductTable(tables.Table):
     class Meta:
@@ -25,4 +31,4 @@ class PackageTable(tables.Table):
         model = Package
         template_name = "django_tables2/bootstrap-responsive.html"
 
-        fields = ('codeBeso','ordinalNumber', 'quantity','pack','orderProduct.furniture','packageFromClient')
+        fields = ('codeBeso','ordinalNumber', 'quantity','pack','orderProduct.furniture','packageFromClient','infoFactory',)

@@ -1,0 +1,20 @@
+logos_label={
+    "Milo Casa":"LOGOS_LABELS/logos_labels.jpg",
+    "CXL by Christian Lacroix":"LOGOS_LABELS/logos_labels2.jpg",
+    "Micadoni Home":"LOGOS_LABELS/logos_labels3.jpg",
+    "Mazzini Sofas":"LOGOS_LABELS/logos_labels4.jpg",
+    "Interieurs 86":"LOGOS_LABELS/logos_labels5.jpg",
+    "Windsor & Co":"LOGOS_LABELS/logos_labels6.jpg",
+    "Label 75":"LOGOS_LABELS/logos_labels7.jpg",
+    "Kooko Home":"LOGOS_LABELS/logos_labels8.jpg",
+    "BSL Concept":"LOGOS_LABELS/logos_labels9.jpg",
+    "Mazzini Beds":"LOGOS_LABELS/logos_labels10.jpg",
+    "Melart":"LOGOS_LABELS/logos_labels11.jpg",
+    "WW NOW":"",
+    "Harper Maison":"LOGOS_LABELS/logos_labels12.jpg",
+    "Classic Living":"LOGOS_LABELS/logos_labels13.jpg",
+    "Cosmopolitan Design":"LOGOS_LABELS/logos_labels14.jpg",
+    "Calme Jardin":"LOGOS_LABELS/logos_labels15.jpg",
+    "BSG":"LOGOS_LABELS/logos_labels16.jpg",
+    "Palaces de France":"LOGOS_LABELS/logos_labels17.jpg"
+    }

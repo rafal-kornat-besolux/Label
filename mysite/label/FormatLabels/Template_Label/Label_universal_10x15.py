@@ -1,4 +1,4 @@
-from .Label_functions import make_Code128, fit, fit2, frame_of_labels
+from .Label_functions import make_Code128, fit, fit2, frame_of_labels, logo
 
 import fpdf
 
@@ -10,25 +10,24 @@ def labels_10x15(i,x=145, y=100):
     pdf.set_auto_page_break(auto=True, margin=0.0)
 
     pdf.add_page()
-
+    frame_of_labels(pdf,100,145)
     # fLabels.frame_of_labels(pdf, y, x)
 
     number = i.ean
 
-    #horizontal lines
-    pdf.line(60, 80, 60, 100)
+    
+
+    #vertical lines
+    pdf.line(60, 60, 60, 100)
     pdf.line(30, 80, 30, 100)
     pdf.line(60, 0, 60, 25)
 
-    #vertical lines
+    #horizontal lines 
     pdf.line(0, 25, x, 25)
-    pdf.line(0, 80, x, 80)
+    pdf.line(0, 80, 60, 80)
+    pdf.line(60, 60, x, 60)  
 
-    # try:
-    #     fLabels.logo(pdf, df["BRAND"][i], 70, 54, 70, 25)
-    # except:
-    #     print("nie ma brandu")
-
+    logo(pdf,i.brand, 65, 61)
 
     make_Code128(pdf, number, 5, 3)
 
@@ -149,6 +148,6 @@ def labels_10x15(i,x=145, y=100):
     #     pdf.set_font('Arial', 'B', size=11)
     #     pdf.set_xy(120, 44)
     #     pdf.cell(w=0, align="L", txt="2MH")
-    frame_of_labels(pdf,145,100)
+    
 
     return pdf

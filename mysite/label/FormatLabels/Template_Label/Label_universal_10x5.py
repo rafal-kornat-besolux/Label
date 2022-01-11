@@ -116,6 +116,15 @@ def labels_10x5(i):
     pdf.set_xy(0, 0)
     pdf.set_xy(35, 22)
 
+    if i.infoFactory!="":
+        text = i.infoFactory
+        pdf.set_font('Arial', 'B', fit2(30, 10, text, 'Arial'))
+        pdf.cell(w=35, h=11, align="C", txt=text)
+    elif i.order[:3] == "DAS":
+        text = i.ean
+        pdf.set_font('Arial', 'B', fit2(30, 10, text, 'Arial'))
+        pdf.cell(w=35, h=11, align="C", txt=text)
+        
     # vr = 0
     # try:
     #     if df["ORDER"][0][-3:] == "DAS":

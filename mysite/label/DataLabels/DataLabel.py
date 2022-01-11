@@ -1,5 +1,6 @@
 from label.models import Package
 from .B2B import function_B2B
+from .Factory import factories_specifications
 
 
 class Label:
@@ -11,6 +12,7 @@ class Label:
         self.ordN = package.ordinalNumber
         self.uniqueBesoCode = package.codeBeso
         self.uniquefactoryCode = package.codeFactory
+        self.infoFactory = package.infoFactory
 
         #From model OrderProduct
         #From model Order
@@ -32,25 +34,38 @@ class Label:
 
 
         self.type_label = 0
+        
         # 1 - universal
         # 2 - VP
+        self.factory_details = 0
+
 
         self.client = ""
         self.factoryID = ""
         
-        if function_B2B(self.description) != False:
-            self.description = function_B2B(self.description)
-            self.type_label = 1
-        elif self.order[:3]=="ORD" and ("VP" in self.description):
+        self = factories_specifications(self)
+
+        if self.factory_details == 1:
+ 
+            if function_B2B(self.description) != False:
+                self.description = function_B2B(self.description)
+                self.type_label = 1
+            elif self.order[:3]=="ORD" and ("VP" in self.description):
+                
+                #print(package.packageFromClient)
+                self.client = package.packageFromClient.number
+                self.type_label = 2
+            elif self.order[:3]=="ORD" and ("BZC" in self.description):
+                
+                #print(package.packageFromClient)
+                self.client = package.packageFromClient.number
+                self.type_label = 2  
+
+        elif self.factory_details == 0.5:
+            self.type_label = 1.5
+
             
-            #print(package.packageFromClient)
-            self.client = package.packageFromClient.number
-            self.type_label = 2
         
-        if self.factoryID == "" and (self.order[-3:] == "KAL" or self.order[-3:] == "CHX" or self.order[-3:] == "DOL" or self.order[-3:] == "GAL"):
-            self.type_label = 3
-            #self.make_label_pdf()
-    
 
 
 

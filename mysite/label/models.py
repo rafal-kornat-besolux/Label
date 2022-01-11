@@ -7,6 +7,8 @@ class Order(models.Model):
     name = models.CharField(max_length=20,unique=True)
     description = models.CharField(max_length=500)
     country = models.CharField(max_length=20)
+    is_made = models.BooleanField(default = False)
+    is_sent = models.BooleanField(default = False)
 
     def __str__(self):
        return '{}'.format(self.name)
@@ -49,13 +51,12 @@ class OrderProduct(models.Model):
                 package.save()
         return(orderProduct)
 
-
 class Campaign(models.Model):
     name = models.CharField(max_length=20)
     client = models.CharField(max_length=20)
     
     def __str__(self):
-       return '{}'.format(self.name)
+       return '{}::{}'.format(self.client,self.name)
 
 class Transporter(models.Model):
     name = models.CharField(max_length=20)
@@ -69,7 +70,7 @@ class PackageFromClient(models.Model):
     furniture = models.ForeignKey(Furniture, on_delete = models.CASCADE)
     pack = models.IntegerField(default = 1)
 
-    number = models.IntegerField(default = 1, unique = True)
+    number = models.CharField(default = "", max_length=20, unique = True)
 
     def __str__(self):
        #return '{} {}:{}_{}'.format(self.campaign, self.transporter, self.furniture.besoRef, str(self.pack))
@@ -83,6 +84,7 @@ class Package(models.Model):
     packageFromClient = models.ForeignKey(PackageFromClient, on_delete = models.SET_NULL, blank = True, null = True)
     codeBeso = models.IntegerField(default = 1, unique = True)
     codeFactory = models.IntegerField(default = 0)
+    infoFactory = models.CharField(default = "",max_length=50)
     
     def __str__(self):
         return(str(self.codeBeso))
