@@ -16,6 +16,7 @@ urlpatterns = [
     
 
     path("transporter", views.add_tranporter, name="add_tranporter"),
+    path("factory", views.factory, name="factory"),
 
     #dropshiping client
     path("vp/<str:name>", views.import_package_VP, name="import_package_VP"),

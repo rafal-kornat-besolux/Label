@@ -14,6 +14,7 @@ from .DataLabels.DataLabel import Label
 from .FunctionPackages import make_dic_from_Optima, country_to_2chars
 from .FunctionVP import campaign_to_dic
 from .FunctionBZC import zpl_to_pdf_bzc
+from .Factory import updater_factory_info
 from .models import Furniture, Order, OrderProduct, Package, PackageFromClient,Transporter, Campaign
 
 from django.core.mail import EmailMessage
@@ -446,23 +447,31 @@ def bzc(request,nameOfCampaign):
     return HttpResponse("bzc done")
 
 def test(request):
-    df=pd.read_excel("Optima_raport"+"//"+"22_BSO.xlsx")
+    # df=pd.read_excel("Optima_raport"+"//"+"22_BSO.xlsx")
     
-    order = Order.objects.get(name = "ORD/2021/000022/BSO")
-    orderProduct = OrderProduct.objects.filter(order = order)
-    packages = Package.objects.filter(orderProduct__in = orderProduct)
-    df2 =pd.DataFrame()
-    for i in packages:
-        df2=df2.append({"ref":i.orderProduct.furniture.besoRef,"pack":i.pack,"quantity":i.quantity,"codeBeso":i.codeBeso}, ignore_index=True)
-    print(df2.columns)
-    df2 = df2.sort_values(by = ["ref","quantity"]).reset_index(drop=True)
-    df = df.sort_values(by = ["ref","qty"]).reset_index(drop=True)
+    # order = Order.objects.get(name = "ORD/2021/000022/BSO")
+    # orderProduct = OrderProduct.objects.filter(order = order)
+    # packages = Package.objects.filter(orderProduct__in = orderProduct)
+    # df2 =pd.DataFrame()
+    # for i in packages:
+    #     df2=df2.append({"ref":i.orderProduct.furniture.besoRef,"pack":i.pack,"quantity":i.quantity,"codeBeso":i.codeBeso}, ignore_index=True)
+    # print(df2.columns)
+    # df2 = df2.sort_values(by = ["ref","quantity"]).reset_index(drop=True)
+    # df = df.sort_values(by = ["ref","qty"]).reset_index(drop=True)
 
-    for i in range(len(df["ref"])):
-        packages = Package.objects.get(codeBeso = df2.loc[i,"codeBeso"])
-        packages.infoFactory = df.loc[i,"code"]
-        packages.save()
+    # for i in range(len(df["ref"])):
+    #     packages = Package.objects.get(codeBeso = df2.loc[i,"codeBeso"])
+    #     packages.infoFactory = df.loc[i,"code"]
+    #     packages.save()
 
+    orders=Order.objects.all()
+    for order in orders:
+        order.factory_info = "None"
+        order.save()
+    return HttpResponse("done")
+
+def factory(request):
+    updater_factory_info()
     return HttpResponse("done")
 
 class FurnitureShow(SingleTableView):
