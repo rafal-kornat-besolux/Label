@@ -10,6 +10,7 @@ class Order(models.Model):
     is_made = models.BooleanField(default = False)
     is_sent = models.BooleanField(default = False)
     factory_info = models.CharField(default = "None",max_length=20)
+    attention = models.BooleanField(default = False)
 
     def __str__(self):
        return '{}'.format(self.name)
@@ -24,6 +25,7 @@ class Furniture(models.Model):
     full = models.CharField(blank = True, max_length = 300, default = "")
     legsPlacement = models.CharField(blank = True, max_length = 50, default = "")
     packagesQuantity = models.IntegerField(blank = True, default = 0)
+    outOfCollection = models.BooleanField(default = False)
 
     def __str__(self):
        return '{}'.format(self.besoRef)
@@ -84,8 +86,8 @@ class Package(models.Model):
     pack = models.IntegerField()
     packageFromClient = models.ForeignKey(PackageFromClient, on_delete = models.SET_NULL, blank = True, null = True)
     codeBeso = models.IntegerField(default = 1, unique = True)
-    codeFactory = models.CharField(default = "",max_length=50)
-    infoFactory = models.CharField(default = "",max_length=50)
+    codeFactory = models.CharField(default = "None",max_length=50)
+    infoFactory = models.CharField(default = "None",max_length=50)
     
     def __str__(self):
         return(str(self.codeBeso))

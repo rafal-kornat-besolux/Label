@@ -12,7 +12,7 @@ class Label:
         self.ordN = package.ordinalNumber
         self.uniqueBesoCode = package.codeBeso
         self.uniquefactoryCode = package.codeFactory
-        self.infoFactory = package.infoFactory
+        
 
         #From model OrderProduct
         #From model Order
@@ -32,6 +32,7 @@ class Label:
         self.legsPlacement = package.orderProduct.furniture.legsPlacement
         self.packagesQuantity = package.orderProduct.furniture.packagesQuantity
 
+        
 
         self.type_label = 0
         
@@ -41,9 +42,18 @@ class Label:
 
 
         self.client = ""
-        self.factoryID = ""
+
+        if package.infoFactory != "None":
+            self.infoFactory = package.infoFactory
+        else:
+            self.infoFactory = ""
         
-        self = factories_specifications(self)
+        if package.codeFactory != "None":
+            self.codeFactory = package.codeFactory
+        else:
+            self.codeFactory = ""
+        
+        self = factories_specifications(self,package)
 
         if self.factory_details == 1:
  
@@ -61,8 +71,7 @@ class Label:
                 self.client = package.packageFromClient.number
                 self.type_label = 2  
 
-        elif self.factory_details == 0.5:
-            self.type_label = 1.5
+        
 
             
         

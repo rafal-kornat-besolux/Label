@@ -1,15 +1,15 @@
 
 
 
-def factories_specifications(self):
+def factories_specifications(self,package):
 
     factory_name = self.order[-3:]
 
     if factory_name == "":
         pass
     elif factory_name == "BEX":
-        pass
-        # self = factories_specifications_BEX(self)
+        if package.orderProduct.order.factory_info != None:
+            self.factory_details = 1
     elif factory_name == "CHX":
         # if self.infoFactory!="":
         #     self.factory_details = 0.5

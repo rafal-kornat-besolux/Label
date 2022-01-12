@@ -273,7 +273,7 @@ def make_label(request):
             z=Label(i)
             set.append(z)
 
-        label_pdf = FormatLabel(set,a.name.replace("/","_"))
+        label_pdf = FormatLabel(set,a.name.replace("/","_"),factory_info = a.factory_info)
         
         if label_pdf.is_made == 1:
             a.is_made = True
@@ -464,9 +464,10 @@ def test(request):
     #     packages.infoFactory = df.loc[i,"code"]
     #     packages.save()
 
-    orders=Order.objects.all()
+    orders=Package.objects.all()
     for order in orders:
-        order.factory_info = "None"
+        order.codeFactory = "None"
+        order.infoFactory = "None"
         order.save()
     return HttpResponse("done")
 
