@@ -9,6 +9,7 @@ class Order(models.Model):
     country = models.CharField(max_length=20)
     is_made = models.BooleanField(default = False)
     is_sent = models.BooleanField(default = False)
+    factory_info = models.CharField(default = "",max_length=20)
 
     def __str__(self):
        return '{}'.format(self.name)
@@ -83,7 +84,7 @@ class Package(models.Model):
     pack = models.IntegerField()
     packageFromClient = models.ForeignKey(PackageFromClient, on_delete = models.SET_NULL, blank = True, null = True)
     codeBeso = models.IntegerField(default = 1, unique = True)
-    codeFactory = models.IntegerField(default = 0)
+    codeFactory = models.CharField(default = "",max_length=50)
     infoFactory = models.CharField(default = "",max_length=50)
     
     def __str__(self):
