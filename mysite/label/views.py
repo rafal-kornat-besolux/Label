@@ -3,10 +3,15 @@ import requests
 import json
 import pandas as pd
 import os 
+from .Filters import OrderFilter, FurnitureFilter, CampaignFilter,  PackageFromClientFilter
+
+
+from django_filters.views import FilterView
+from django_tables2.views import SingleTableMixin
 
 from django.shortcuts import get_object_or_404
 from django_tables2 import SingleTableView
-from .Tables import FurnitureTable, OrderTable, OrderProductTable, PackageTable
+from .Tables import FurnitureTable, OrderTable, OrderProductTable, PackageTable, CampaignTable, PackageFromClientTable
 
 from .FormatLabels.FormatLabel import FormatLabel
 from .DataLabels.DataLabel import Label
@@ -21,6 +26,99 @@ from django.core.mail import EmailMessage
 
 def index(request):
     return HttpResponse("hi")
+
+def fetchoutofcollection(request):
+    request_url = 'http://pim.besolux.com/pimcore-graphql-webservices/outofcollection?apikey=b0860326999c15f5b1e9618062ab7217'
+    after=0
+    while True:
+        query = """query {
+            getProductListing(first:100, after: """+str(after)+""",filter: "{\\"isParent\\": {\\"$like\\" : \\"parent\\"}}") {
+                edges {
+                node {
+                    besoLuxRef
+                    producersReference
+                    brandRel
+                    fColor
+                    legsPlacement
+                    packagesQuantity
+                    children (objectTypes:["variant"]) {
+                    ...on object_Product {
+                        besoLuxRef
+                        producersReference
+                        ean
+                        titleForLabels
+                        fabrics {
+                        ...on object_Fabric {
+                            series
+                            color {
+                            ...on object_FabricColor {
+                                name(language:"en")
+                            }
+                            }
+                        }
+                        }
+                    }
+                    }
+                }
+                }
+            }
+            }
+            """
+        after+=100
+        r = requests.post(request_url, json={'query': query})
+        
+        if len(r.text)<45:
+            break
+        
+        try:
+            json_data = json.loads(r.text)
+        except:
+            return HttpResponse(r.text)
+
+        for parent in json_data["data"]["getProductListing"]["edges"]:
+            for child in parent['node']["children"]:
+                f = Furniture.objects.filter(besoRef = child["besoLuxRef"])
+
+                if f.exists():
+                    
+                    f = f.first()
+                    #info from parent
+                    f.brand = parent['node']['brandRel']
+                    f.legsPlacement = parent['node']['legsPlacement']
+                    f.packagesQuantity = parent['node']['packagesQuantity']
+                    #info from child
+                    f.factoryRef = child["producersReference"]
+                    f.ean = child["ean"]
+                    f.full = child["titleForLabels"]
+                    f.factoryRef = child["producersReference"]
+                    f.outOfCollection = True
+                    #more structure
+                # try:
+                    if child["fabrics"]== None:
+                        f.fabric = ""
+                        f.color = ""
+                    elif  child["fabrics"][0]["series"]!= None and child["fabrics"][0]['color'] != None:
+                        f.fabric = child["fabrics"][0]["series"]
+                        f.color = child["fabrics"][0]['color']["name"]
+
+                    elif child["fabrics"][0]["series"] != None and child["fabrics"][0]['color'] == None:
+                        f.fabric = child["fabrics"][0]["series"]
+                        f.color = ""
+
+                    elif child["fabrics"][0]["series"] == None and child["fabrics"][0]['color'] != None:
+                        f.fabric = ""
+                        f.color = child["fabrics"][0]['color']["name"]
+
+                    else:
+                        return HttpResponse(child["besoLuxRef"])
+                    f.save()
+                    print(child["besoLuxRef"])
+                    # except:
+                    #     if child["besoLuxRef"] != "CXL_CHSET2_76_F10_LYS1":
+                    #         return HttpResponse(child["besoLuxRef"])
+                
+
+    return HttpResponse("Add and update data from PIM")
 
 def fetchpimcore(request):
     request_url = 'http://pim.besolux.com/pimcore-graphql-webservices/graphql?apikey=e1323dd9c2c04563240eddc9d4583799'
@@ -86,6 +184,7 @@ def fetchpimcore(request):
                     f.ean = child["ean"]
                     f.full = child["titleForLabels"]
                     f.factoryRef = child["producersReference"]
+                    f.outOfCollection = False
                     #more structure
                     if child["fabrics"]== None:
                         f.fabric = ""
@@ -227,23 +326,26 @@ def make_order_from_Optima(request):
                             else:
                                 text = text + "Problem with order "+ nameOfOrder + ". No reference "+ ref +" : in System, but we have in Optima." + "\n\n"
 
-    if text != "":
-        email = EmailMessage(
-                'IT- Problems import order from Optima',
-                text,
-                'from@example.com',
-                cc=["rafal.trachta@besolux.com","rafal.kornat@besolux.com"],
-                headers={'Message-ID': 'foo'},
-                                    )
-        email.send()                    
+    # if text != "":
+    #     email = EmailMessage(
+    #             'IT- Problems import order from Optima',
+    #             text,
+    #             'from@example.com',
+    #             cc=["rafal.trachta@besolux.com","rafal.kornat@besolux.com"],
+    #             headers={'Message-ID': 'foo'},
+    #                                 )
+    #     email.send()                    
                 
     return HttpResponse("Add orders")
 
 def label_campaign(request,campaign):
     undone = []
     campaign = Campaign.objects.get(name = campaign)
+    
     client = campaign.client
-    setorder = Order.objects.filter(description__contains = campaign)
+
+    setorder = Order.objects.filter(description__contains = campaign.name)
+    print(setorder)
     for a in setorder:
         orderProducts = OrderProduct.objects.filter(order=a)
         x = Package.objects.filter(orderProduct__in = orderProducts)
@@ -252,7 +354,7 @@ def label_campaign(request,campaign):
             z=Label(i)
             set.append(z)
         
-        label_pdf = FormatLabel(set,a.name.replace("/","_"),str(campaign),client)
+        label_pdf = FormatLabel(set,a.name.replace("/","_"),str(campaign.name),client)
 
         if label_pdf.is_made == 1:
             a.is_made = True
@@ -292,14 +394,14 @@ def make_label(request):
     #     for i in undone:
     #         text += "Zamowienie: " + str(i.name) + " Opis: " +  str(i.description)  + "\n"
 
-    email = EmailMessage(
-                'IT- Problems with labels',
-                text,
-                'from@example.com',
-                cc=["rafal.trachta@besolux.com","rafal.kornat@besolux.com"],
-                headers={'Message-ID': 'foo'},
-                                    )
-    email.send()  
+    # email = EmailMessage(
+    #             'IT- Problems with labels',
+    #             text,
+    #             'from@example.com',
+    #             cc=["rafal.trachta@besolux.com","rafal.kornat@besolux.com"],
+    #             headers={'Message-ID': 'foo'},
+    #                                 )
+    # email.send()  
     
     return HttpResponse("we did: " + str(text))
 
@@ -447,51 +549,59 @@ def bzc(request,nameOfCampaign):
     return HttpResponse("bzc done")
 
 def test(request):
-    # df=pd.read_excel("Optima_raport"+"//"+"22_BSO.xlsx")
     
-    # order = Order.objects.get(name = "ORD/2021/000022/BSO")
-    # orderProduct = OrderProduct.objects.filter(order = order)
-    # packages = Package.objects.filter(orderProduct__in = orderProduct)
-    # df2 =pd.DataFrame()
-    # for i in packages:
-    #     df2=df2.append({"ref":i.orderProduct.furniture.besoRef,"pack":i.pack,"quantity":i.quantity,"codeBeso":i.codeBeso}, ignore_index=True)
-    # print(df2.columns)
-    # df2 = df2.sort_values(by = ["ref","quantity"]).reset_index(drop=True)
-    # df = df.sort_values(by = ["ref","qty"]).reset_index(drop=True)
-
-    # for i in range(len(df["ref"])):
-    #     packages = Package.objects.get(codeBeso = df2.loc[i,"codeBeso"])
-    #     packages.infoFactory = df.loc[i,"code"]
-    #     packages.save()
-
-    orders=Package.objects.all()
-    for order in orders:
-        order.codeFactory = "None"
-        order.infoFactory = "None"
-        order.save()
-    return HttpResponse("done")
+    setOfOrders=[
+       "ORD/2021/000020/BSO",
+"ORD/2021/000021/BSO",
+"ORD/2021/000022/BSO",
+        ]
+    orderob = Order.objects.filter(name__in = setOfOrders)
+    orderprodob = OrderProduct.objects.filter(order__in = orderob)
+    packob = Package.objects.filter(orderProduct__in = orderprodob)
+    text=""
+    for pack in packob:
+        text = text +str(pack.packageFromClient)+","
+    return HttpResponse("tata:"+text)
 
 def factory(request):
     updater_factory_info()
     return HttpResponse("done")
 
-class FurnitureShow(SingleTableView):
+class FurnitureShow(SingleTableMixin, FilterView):
     model = Furniture
     queryset = Furniture.objects.all()
     table_class = FurnitureTable
-    template_name = "order.html"
+    template_name = "order2.html"
 
-class OrderShow(SingleTableView):
+    filterset_class = FurnitureFilter
+
+class OrderShow(SingleTableMixin, FilterView):
     model = Order
     queryset = Order.objects.all()
     table_class = OrderTable
-    template_name = "order.html"
+    template_name = "order2.html"
 
-class OrderNoShow(SingleTableView):
-    model = Order
-    queryset = Order.objects.filter(is_made = False)
-    table_class = OrderTable
-    template_name = "order.html"
+    filterset_class = OrderFilter
+
+class CampaignShow(SingleTableMixin, FilterView):
+    model = Campaign
+    queryset = Campaign.objects.all()
+    table_class = CampaignTable
+    template_name = "order2.html"
+
+    filterset_class = CampaignFilter
+
+class PackageFromClientShow(SingleTableMixin, FilterView):
+    model = PackageFromClient
+    table_class = PackageFromClientTable
+    template_name = "order2.html"
+
+    filterset_class = PackageFromClientFilter
+
+    def get_queryset(self):
+        pk = self.kwargs['pk']
+        campaign = Campaign.objects.get(pk=pk)
+        return PackageFromClient.objects.filter(campaign=campaign)
 
 class OrderProductShow(SingleTableView):
     model = OrderProduct

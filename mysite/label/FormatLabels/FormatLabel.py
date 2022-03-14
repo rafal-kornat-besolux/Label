@@ -3,7 +3,7 @@ from .Combining import combining_universal_10x20, combining_dropshiping_10x20, c
 from .Export import to_xlsx
 
 set_10x20 =  ["STX", "DAS", "MGR", "CHX", "MBS", "BEX", "GIB",
-     "MLE","SOB","BSO","DOL","GAL","ZAM","CHB"]
+     "MLE","SOB","BSO","DOL","GAL","ZAM","CHB","AAA"]
 set_specific = ["ANG"]
 
 def case_writer(writer,name,factory_info):
@@ -18,9 +18,10 @@ def case_writer(writer,name,factory_info):
 
 class FormatLabel:
     is_made=0
-
+    
     def __init__(self,setOfDataLabel,name,extra = "",client = "",factory_info = "None"):
         writer = PdfFileWriter()
+    
         if setOfDataLabel[0].type_label == 1:
             if setOfDataLabel[0].order[-3:] in set_10x20:
                 writer = combining_universal_10x20(writer,setOfDataLabel)

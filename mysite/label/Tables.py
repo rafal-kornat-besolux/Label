@@ -1,6 +1,7 @@
 import django_tables2 as tables
 from django_tables2.utils import A
-from .models import Furniture, Order, OrderProduct, Package
+from .models import Furniture, Order, OrderProduct, Package, Campaign, PackageFromClient
+from django_filters.views import FilterView
 
 class FurnitureTable(tables.Table):
     class Meta:
@@ -32,3 +33,17 @@ class PackageTable(tables.Table):
         template_name = "django_tables2/bootstrap-responsive.html"
 
         fields = ('codeBeso','ordinalNumber', 'quantity','pack','orderProduct.furniture','packageFromClient','infoFactory',)
+
+class CampaignTable(tables.Table):
+    Package = tables.LinkColumn('order_from_client_details_packages', text='Package', args=[A("pk")], orderable=False)
+    class Meta:
+        model = Campaign
+        template_name = "django_tables2/bootstrap-responsive.html"
+        fields = ('name','client',)
+
+class PackageFromClientTable(tables.Table):
+    class Meta:
+        model = PackageFromClient
+        template_name = "django_tables2/bootstrap-responsive.html"
+
+        fields = ('transporter','furniture', 'pack','number',)

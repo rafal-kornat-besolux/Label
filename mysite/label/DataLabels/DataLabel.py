@@ -70,6 +70,8 @@ class Label:
                 #print(package.packageFromClient)
                 self.client = package.packageFromClient.number
                 self.type_label = 2  
+        else:
+            print(self.factory_details)
 
         
 

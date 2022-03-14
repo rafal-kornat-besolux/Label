@@ -11,7 +11,7 @@ def case_basic(value):
     "SETTIMO", "STK: BONAMI", "BONAMI","Mezoni","DESIGN_AG", 
     "VIVRE_RO", "MYSTORE", "VEMZU", "PIGU", "MUZZA", "10DX",
     "NAPRIJED", "AIO_LIVING", "CRISTINA POPESCU","SPECIAL EVENTS",
-    "LIMANGO","MEZONI","INTELLIGENT DESIGN"]
+    "LIMANGO","MEZONI","INTELLIGENT DESIGN","na magazyn"]
     
     for i in set:
         if i in value:

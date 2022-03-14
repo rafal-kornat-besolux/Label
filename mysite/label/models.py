@@ -15,6 +15,11 @@ class Order(models.Model):
     def __str__(self):
        return '{}'.format(self.name)
 
+class OrderB2C(Order):
+    nameOfClient = models.CharField(max_length=100)
+    surnameOfClient = models.CharField(max_length=100)
+
+
 class Furniture(models.Model):
     besoRef = models.CharField(max_length=50, unique=True)
     factoryRef = models.CharField(max_length=50, default = "")

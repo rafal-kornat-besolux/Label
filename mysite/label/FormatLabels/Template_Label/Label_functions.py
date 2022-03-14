@@ -30,7 +30,7 @@ def height_to_mm(x):
     return(x/2.835)
 
 def fit2(dl, wys, txt, font):
-    print(dl, wys)
+    
     i = 4
     while True:
         if dl-GetTextDimensions(txt, i, font) > 0 and wys-height_to_mm(i) > 0:

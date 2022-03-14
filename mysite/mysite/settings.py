@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mysite',
     'django_tables2',
-    'django_extensions'
+    'django_extensions',
+    'bootstrap3',
+    'django_filters'
 ]
 
 MIDDLEWARE = [

@@ -12,12 +12,15 @@ def labels_10x5(i):
 
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=0.0)
-
-
-    make_Code128(pdf, number=i.uniqueBesoCode, x=0, y=39,w=100,h=10)
+    if i.uniquefactoryCode == "None":
+        code = str(i.uniqueBesoCode)
+        make_Code128(pdf, number=i.uniqueBesoCode, x=0, y=39,w=100,h=10)
+    else:
+        code = str(i.uniquefactoryCode)
+        make_Code128(pdf, number=i.uniquefactoryCode, x=0, y=39,w=100,h=10)
 
     pdf.set_font('DejaVu', 'B', 12)
-    text = str(i.uniqueBesoCode)
+    text = code
     pdf.set_xy(0, 33)
     pdf.cell(w=90,h=7, align="C", txt=text)
     
@@ -50,8 +53,7 @@ def labels_10x5(i):
     
 
     text = str(i.besoRef)
-    pdf.set_font('DejaVu', 'B', fit2(
-        70, 7, text, 'DejaVu'))
+    pdf.set_font('Arial', 'B', fit2(70, 7, text, 'Arial'))
     pdf.set_xy(2, 3)
 
     pdf.cell(w=96, h=7, align="C", txt=text)
@@ -131,8 +133,11 @@ def labels_10x5(i):
         
     # vr = 0
     # try:
-    #     if df["ORDER"][0][-3:] == "DAS":
-    #         text = str(int(df["EAN"][i]))
+    if "DAS" in i.order:
+        text = str(i.ean)
+        pdf.set_font('DejaVu', 'B', fit2(
+            30, 10, text, 'DejaVu'))
+        pdf.cell(w=35, h=11, align="C", txt=text)
     #         vr = 1
     #     elif df["ORDER"][0][-3:] == "CPT":
     #         if "," in df["FABRIC"][i]:

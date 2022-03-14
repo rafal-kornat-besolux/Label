@@ -7,10 +7,12 @@ urlpatterns = [
     path('test', views.test, name='test'),
     path('furniture', views.FurnitureShow.as_view(), name='furniture'),
     path('orders', views.OrderShow.as_view(), name='orders'),
-    path('ordersno', views.OrderNoShow.as_view(), name='ordersno'),
+    path('campaign', views.CampaignShow.as_view(), name='campaign'),
     path('info/<int:pk>/', views.OrderProductShow.as_view(), name='order_details'),
     path('info_pack/<int:pk>/', views.PackageShow.as_view(), name='order_details_packages'),
+    path('info_pack_client/<int:pk>/', views.PackageFromClientShow.as_view(), name='order_from_client_details_packages'),
     path('fetchpimcore', views.fetchpimcore, name='fetchpimcore'),
+    path('fetchout', views.fetchoutofcollection, name='fetchoutofcollection'),
     path("optima", views.make_order_from_Optima, name='make_order_from_Optima'),
     path("label", views.make_label, name='make_label'),
     

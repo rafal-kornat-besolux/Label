@@ -11,18 +11,15 @@ def factories_specifications(self,package):
         if package.orderProduct.order.factory_info != None:
             self.factory_details = 1
     elif factory_name == "CHX":
-        # if self.infoFactory!="":
-        #     self.factory_details = 0.5
-        # else:
-        #     self.factory_details = 1
-        pass
+       if package.orderProduct.order.factory_info != None:
+            self.factory_details = 1
     elif factory_name == "GAL":
-        pass
+        if package.orderProduct.order.factory_info != None:
+            self.factory_details = 1
         # self = factories_specifications_GAL(self)
     elif factory_name == "MOD": #and self.order[:3] !="SAV":
-        pass
-        # print(df.loc[0, "ORDER"][:3])
-        # self = factories_specifications_MOD(self)
+       if package.orderProduct.order.factory_info != None:
+            self.factory_details = 1
     elif factory_name == "KAL":
         pass
         # self = factories_specifications_KAL(self)
