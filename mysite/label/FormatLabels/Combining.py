@@ -36,9 +36,11 @@ def combining_universal_10x20(writer,setOfDataLabel):
             heightPage2 = page_10x5.mediaBox.getHeight()
             widthPage2 = page_10x5.mediaBox.getWidth()
 
-
             translated_page = PageObject.createBlankPage(
-                None, heightPage1, widthPage1+heightPage2)
+                None,
+                heightPage1,
+                widthPage1 + heightPage2
+                )
             translated_page.mergeRotatedScaledTranslatedPage(
                 page_10x15, 90, 1, heightPage1, heightPage2)
             translated_page.mergeRotatedScaledTranslatedPage(

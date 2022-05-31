@@ -15,7 +15,7 @@ urlpatterns = [
     path('fetchout', views.fetchoutofcollection, name='fetchoutofcollection'),
     path("optima", views.make_order_from_Optima, name='make_order_from_Optima'),
     path("label", views.make_label, name='make_label'),
-    
+    path("approve", views.check_approval_status, name='check_approval_status'),
 
     path("transporter", views.add_tranporter, name="add_tranporter"),
     path("factory", views.factory, name="factory"),
@@ -26,5 +26,8 @@ urlpatterns = [
     #connect data Package and PackageFromClient
     path("connect/<str:nameOfCampaign>", views.connect_campaign, name="connect_campaign"),
     #make label dropshiping
-    path("label/<str:campaign>", views.label_campaign, name="label_campaign")
+    path("label/<str:campaign>", views.label_campaign, name="label_campaign"),
+
+    path('download/<int:pk>', views.download_file, name="download_file"),
+
 ]

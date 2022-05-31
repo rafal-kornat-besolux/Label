@@ -9,6 +9,8 @@ class OrderFilter(django_filters.FilterSet):
             'description': ['contains'],
             'country': ['exact'],
             'is_made': ['exact'],
+            'factoryApproval': ['exact'],
+            'clientApproval': ['exact'],
         }
 
 class FurnitureFilter(django_filters.FilterSet):
@@ -28,11 +30,11 @@ class FurnitureFilter(django_filters.FilterSet):
         }
 
 class CampaignFilter(django_filters.FilterSet):
+    client = django_filters.CharFilter(field_name='client__name', lookup_expr='icontains')
     class Meta:
         model = Campaign
         fields = {
             'name': ['contains'],
-            'client': ['contains'],
         }
 
 class PackageFromClientFilter(django_filters.FilterSet):

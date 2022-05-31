@@ -12,7 +12,6 @@ class Label:
         self.ordN = package.ordinalNumber
         self.uniqueBesoCode = package.codeBeso
         self.uniquefactoryCode = package.codeFactory
-        
 
         #From model OrderProduct
         #From model Order
@@ -31,8 +30,6 @@ class Label:
         self.full = package.orderProduct.furniture.full
         self.legsPlacement = package.orderProduct.furniture.legsPlacement
         self.packagesQuantity = package.orderProduct.furniture.packagesQuantity
-
-        
 
         self.type_label = 0
         
@@ -72,12 +69,3 @@ class Label:
                 self.type_label = 2  
         else:
             print(self.factory_details)
-
-        
-
-            
-        
-
-
-
-        

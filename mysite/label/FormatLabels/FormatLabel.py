@@ -28,7 +28,7 @@ class FormatLabel:
                 case_writer(writer,name,factory_info)
                 self.is_made=1
             else:
-                writer = combining_universal_A4(writer,setOfDataLabel,extra)
+                writer = combining_universal_A4(writer,setOfDataLabel)
                 case_writer(writer,name,factory_info)
                 self.is_made=1
         elif setOfDataLabel[0].type_label == 2:

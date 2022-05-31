@@ -101,7 +101,6 @@ def case_CHX():
                 text = text + "Problem dla zamowienia"+order.name
     return text
 
-
 def case_BEX():
     text=""
     setOfOrder = Order.objects.filter(factory_info = "None").filter(name__contains = "BEX")
@@ -160,7 +159,7 @@ def updater_factory_info():
                     'IT- Problems with Facotries IMPORT DATA',
                     text,
                     'from@example.com',
-                    cc=["rafal.trachta@besolux.com","rafal.kornat@besolux.com"],
+                    cc=["rafal.kornat@besolux.com"],
                     headers={'Message-ID': 'foo'},
                                         )
         email.send()

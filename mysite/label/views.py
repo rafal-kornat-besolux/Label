@@ -1,17 +1,20 @@
+from asyncio.windows_events import NULL
 from django.http import HttpResponse
 import requests
 import json
 import pandas as pd
 import os 
-from .Filters import OrderFilter, FurnitureFilter, CampaignFilter,  PackageFromClientFilter
+from .filters import OrderFilter, FurnitureFilter, CampaignFilter,  PackageFromClientFilter
+from django.core.files.base import File
 
+import mimetypes
 
 from django_filters.views import FilterView
 from django_tables2.views import SingleTableMixin
 
 from django.shortcuts import get_object_or_404
 from django_tables2 import SingleTableView
-from .Tables import FurnitureTable, OrderTable, OrderProductTable, PackageTable, CampaignTable, PackageFromClientTable
+from .tables import FurnitureTable, OrderTable, OrderProductTable, PackageTable, CampaignTable, PackageFromClientTable
 
 from .FormatLabels.FormatLabel import FormatLabel
 from .DataLabels.DataLabel import Label
@@ -19,8 +22,9 @@ from .DataLabels.DataLabel import Label
 from .FunctionPackages import make_dic_from_Optima, country_to_2chars
 from .FunctionVP import campaign_to_dic
 from .FunctionBZC import zpl_to_pdf_bzc
-from .Factory import updater_factory_info
-from .models import Furniture, Order, OrderProduct, Package, PackageFromClient,Transporter, Campaign
+from .functionOrders import checkFactoryApproval,checkClientApproval
+from .factory import updater_factory_info
+from .models import Furniture, Order, OrderProduct, Package, PackageFromClient,Transporter, Campaign,Factory
 
 from django.core.mail import EmailMessage
 
@@ -121,9 +125,10 @@ def fetchoutofcollection(request):
     return HttpResponse("Add and update data from PIM")
 
 def fetchpimcore(request):
-    request_url = 'http://pim.besolux.com/pimcore-graphql-webservices/graphql?apikey=e1323dd9c2c04563240eddc9d4583799'
+    request_url = 'http://pim.besolux.com/pimcore-graphql-webservices/IT_LOGISTIC?apikey=808e344746070e84579d8dd2c3ba18cd'
     after=0
     while True:
+        print(after)
         query = """query {
             getProductListing(first:100, after: """+str(after)+""",filter: "{\\"isParent\\": {\\"$like\\" : \\"parent\\"}}") {
                 edges {
@@ -260,7 +265,8 @@ def make_order_from_Optima(request):
         name=nameOfOrder.replace("_","/")
         order = Order.objects.filter(name = name)
         country = country_to_2chars(dic[nameOfOrder]["country"])
-        
+        #to do if factory not exists
+        factory = Factory.objects.get(shortcut = name[-3:]) 
         if country == None:
             text = text + "Problem with country "+ dic[nameOfOrder]["country"] + " from " + nameOfOrder + "\n\n"
 
@@ -269,7 +275,8 @@ def make_order_from_Optima(request):
                 ord=Order(
                     name = name,
                     description = dic[nameOfOrder]["description"],
-                    country = country
+                    country = country,
+                    factory = factory
                 )
                 ord.save()
                 check = 0
@@ -293,6 +300,7 @@ def make_order_from_Optima(request):
 
                 order.country = country
                 order.description = dic[nameOfOrder]["description"]
+                order.factory = factory
                 order.save()
                 
                 if len(dic[nameOfOrder]["order"]) !=len (OrderProduct.objects.filter(order = order)):
@@ -365,7 +373,8 @@ def label_campaign(request,campaign):
     return HttpResponse("done")
 
 def make_label(request):
-    setorder = Order.objects.filter(is_made = False).exclude(description__contains = "VP").exclude(description__contains = "BZC")
+    setorder = Order.objects.exclude(is_made = True).filter(clientApproval = True).filter(factoryApproval = True)
+    print(setorder)
     done = []
     for a in setorder:
         orderProducts = OrderProduct.objects.filter(order=a)
@@ -379,31 +388,24 @@ def make_label(request):
         
         if label_pdf.is_made == 1:
             a.is_made = True
-            a.save()
+            with open("done_label"+"\\"+"10x20 etykiety_" + a.name.replace("/","_") + ".pdf", 'rb') as f:
+                a.label=  File(f,"done_label"+"\\"+"10x20 etykiety_" + a.name.replace("/","_") + ".pdf")
+                a.save()
         else:
             done.append(a)
-
-    text="Zamowienia(NIE VP, NIE BZC) bez etykiet:\n\n"
-    for i in done:
-        text += "Zamowienie: " + str(i.name) + " Opis: " +  str(i.description)  + "\n"
-
-    # campaings = Campaign.objects.all()
-    # text += "\n\nZamowienia VP, BZC bez etykiet:\n\n"
-    # for campaign in campaings:
-    #     undone = label_campaign(campaign.name)
-    #     for i in undone:
-    #         text += "Zamowienie: " + str(i.name) + " Opis: " +  str(i.description)  + "\n"
-
-    # email = EmailMessage(
-    #             'IT- Problems with labels',
-    #             text,
-    #             'from@example.com',
-    #             cc=["rafal.trachta@besolux.com","rafal.kornat@besolux.com"],
-    #             headers={'Message-ID': 'foo'},
-    #                                 )
-    # email.send()  
     
-    return HttpResponse("we did: " + str(text))
+    return HttpResponse("we did: " + str(done))
+
+def download_file(request,pk):
+    order = Order.objects.get(pk=pk)
+    # check if label is done
+    if order.label != None:
+        filename = order.label.name.split('/')[-1]
+        response = HttpResponse(order.label, content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        return response
+    else:
+        return HttpResponse("There are no labels to order "+ order.name)
 
 def import_package_VP(request,name):
     if  os.path.isdir("working_labels/VP"+"\\"+name):
@@ -566,6 +568,13 @@ def test(request):
 def factory(request):
     updater_factory_info()
     return HttpResponse("done")
+
+def check_approval_status(request):
+    allOrders = Order.objects.all()
+    checkFactoryApproval(allOrders)
+    checkClientApproval(allOrders)
+    return HttpResponse("done")
+
 
 class FurnitureShow(SingleTableMixin, FilterView):
     model = Furniture
