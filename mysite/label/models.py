@@ -4,6 +4,11 @@ from zmq import TYPE
 from .FunctionPackages import make_code
 
 # Create your models here.
+class Transporter(models.Model):
+    name = models.CharField(max_length=20)
+
+    def __str__(self):
+       return '{}'.format(self.name)
 
 class Factory(models.Model):
     shortcut = models.CharField(max_length =3, unique=True)
@@ -22,20 +27,42 @@ class Factory(models.Model):
     def __str__(self):
        return '{}'.format(self.shortcut)
 
+class Client(models.Model):
+    name = models.CharField(max_length = 200)
+    descriptionToFind = models.CharField(max_length =100,default = '')
+    transporter = models.ForeignKey(Transporter, on_delete = models.CASCADE, null = True, blank = True)
+    is_campaign = models.BooleanField(default = False)
+    type = models.CharField(max_length=50, default="Casual", choices= (
+        ("Casual", "Casual"),
+        ("CasualOneInformation", "CasualOneInformation"),
+        ("DropshippingOutside", "DropshipingOutside"),
+        ("Dropshipping", "Dropshipping")
+    ))
+    def __str__(self):
+       return '{}'.format(self.name)
+
+class Campaign(models.Model):
+    name = models.CharField(max_length = 20)
+    client = models.ForeignKey(Client, on_delete = models.CASCADE, null=True)
+    
+    def __str__(self):
+       return '{}'.format(self.name)
+
 class Order(models.Model):
     name = models.CharField(max_length=20,unique=True)
-    factory = models.ForeignKey(Factory, on_delete = models.CASCADE,null=True)
+    factory = models.ForeignKey(Factory, on_delete = models.CASCADE, null=True)
     description = models.CharField(max_length=500)
     country = models.CharField(max_length=20)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     #do usuniecia
     is_made = models.BooleanField(default = False)
     is_sent = models.BooleanField(default = False)
-    factory_info = models.CharField(max_length=20)
+    factory_order_info = models.CharField(max_length=20,null=True,blank = True)
     #do usuniecia
     attention = models.BooleanField(default = False)
     factoryApproval = models.BooleanField(default = False)
     clientApproval = models.BooleanField(default = False)
-    label = models.FileField(upload_to = "Label_file" ,null=True)
+    label = models.FileField(upload_to = "Label_file" ,null=True,blank=True)
 
     def __str__(self):
        return '{}'.format(self.name)
@@ -43,14 +70,20 @@ class Order(models.Model):
 class OrderB2C(Order):
     nameOfClient = models.CharField(max_length=100, blank = True)
     surnameOfClient = models.CharField(max_length=100, blank = True)
-    street = models.CharField(max_length=100,blank = True)
-    numberOfStreet = models.IntegerField(blank = True, default = 0)
-    numberofFlat = models.IntegerField(blank = True, default = 0)
-    city = models.CharField(max_length=100,blank = True)
-    code = models.CharField(max_length=100,blank = True)
-    email = models.CharField(max_length=100,blank = True)
-    phone = models.CharField(max_length=100,blank = True)
-    dropshippingApproval = models.CharField(max_length=100, default= False)
+    street = models.CharField(max_length=100, blank = True)
+    numberOfStreet = models.CharField(max_length=100, blank = True, null=True)
+    numberofFlat = models.CharField(max_length=100, blank = True, null=True)
+    city = models.CharField(max_length=100, blank = True)
+    code = models.CharField(max_length=100, blank = True)
+    email = models.CharField(max_length=100, blank = True)
+    phone = models.CharField(max_length=100, blank = True)
+
+    productionDate = models.DateField(null=True, blank=True)
+    pickupDate = models.DateField(null=True, blank=True)
+    dropshipingPartner = models.CharField(max_length=100,null = True, blank = True)
+
+    correctnessOfData = models.BooleanField(default= False)
+    dropshippingApproval = models.BooleanField( default= False)
 
 class Furniture(models.Model):
     besoRef = models.CharField(max_length=50, unique=True)
@@ -90,28 +123,6 @@ class OrderProduct(models.Model):
                 package = Package.create(i+1,j+1,ordN, name,ref)
                 package.save()
         return(orderProduct)
-
-class Transporter(models.Model):
-    name = models.CharField(max_length=20)
-
-    def __str__(self):
-       return '{}'.format(self.name)
-
-class Client(models.Model):
-    name = models.CharField(max_length = 200)
-    transporter = models.ForeignKey(Transporter, on_delete = models.CASCADE, null = True)
-    is_campaign = models.BooleanField(default = False)
-    type = models.CharField(max_length =200)
-    #dodanie opcji 1-casual, 2-typ westwing, 3-typ VP, 4-typ courier
-    def __str__(self):
-       return '{}'.format(self.name)
-
-class Campaign(models.Model):
-    name = models.CharField(max_length = 20)
-    client = models.ForeignKey(Client, on_delete = models.CASCADE, null=True)
-    
-    def __str__(self):
-       return '{}'.format(self.name)
 
 class PackageFromClient(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete = models.CASCADE)

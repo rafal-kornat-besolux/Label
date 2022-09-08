@@ -22,6 +22,19 @@ class OrderTable(tables.Table):
         template_name = "django_tables2/bootstrap-responsive.html"
         fields = ('name','description', 'country','is_made' ,'factoryApproval','clientApproval',)
 
+class OrderB2CTable(tables.Table):
+    # download = DownloadLinkColumn('downloadexcel', text='Download', args=[A("pk")], orderable=False)
+    # summary = tables.LinkColumn('offerdetail', text='Summary', args=[A("pk")], orderable=False)
+    Details = tables.LinkColumn('order_details', text='Details', args=[A("pk")], orderable=False)
+    Package = tables.LinkColumn('order_details_packages', text='Package', args=[A("pk")], orderable=False)
+    Label = tables.LinkColumn('download_file', text='Label', args=[A("pk")], orderable=False)
+    # edit = tables.LinkColumn('offeredit', text='Edit', args=[A("pk")], orderable=False)
+    # delete = tables.LinkColumn('offerdelete', text='Delete', args=[A("pk")], orderable=False)
+    class Meta:
+        model = Order
+        template_name = "django_tables2/bootstrap-responsive.html"
+        fields = ('name','description', 'country','is_made' ,'factoryApproval','clientApproval','nameOfClient', 'surnameOfClient', 'street', 'numberOfStreet','numberofFlat', 'city', 'code', 'email', 'phone', 'productionDate', 'pickupDate','dropshipingPartner','correctnessOfData','dropshipingApproval')
+
 class OrderProductTable(tables.Table):
     class Meta:
         model = OrderProduct

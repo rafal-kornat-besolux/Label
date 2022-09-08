@@ -39,7 +39,7 @@ def make_code(order,ordN,qty,pack):
 
 def make_dic_from_Optima():
     path = "Optima_raport"
-    df=pd.read_excel(path+"\\"+"Rpt.xls")
+    df=pd.read_excel(path+"\\"+"Rpt.xlsx")
     orders=df["ORDER"].unique()
     dic={}
     for i in orders:
@@ -59,7 +59,9 @@ def make_dic_from_Optima():
 
 #ISO 3166-1 Alpha-2 code
 def country_to_2chars(nameOfCountry):
-    if len(nameOfCountry) > 2:
+    if nameOfCountry!= nameOfCountry:
+        return None
+    elif len(nameOfCountry) > 2:
         if nameOfCountry.upper() in ["NIEMCY", "GERMANY"]:
             return "DE"
         elif nameOfCountry.upper() in ["SWITZERLAND", "SZWAJCARIA"]:

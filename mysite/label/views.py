@@ -4,17 +4,17 @@ import requests
 import json
 import pandas as pd
 import os 
-from .filters import OrderFilter, FurnitureFilter, CampaignFilter,  PackageFromClientFilter
 from django.core.files.base import File
 
-import mimetypes
+from django.views.generic.edit import  UpdateView
+from .forms import OrderB2CForm
 
-from django_filters.views import FilterView
-from django_tables2.views import SingleTableMixin
+import mimetypes
+from django.shortcuts import redirect
+
 
 from django.shortcuts import get_object_or_404
-from django_tables2 import SingleTableView
-from .tables import FurnitureTable, OrderTable, OrderProductTable, PackageTable, CampaignTable, PackageFromClientTable
+
 
 from .FormatLabels.FormatLabel import FormatLabel
 from .DataLabels.DataLabel import Label
@@ -22,9 +22,11 @@ from .DataLabels.DataLabel import Label
 from .FunctionPackages import make_dic_from_Optima, country_to_2chars
 from .FunctionVP import campaign_to_dic
 from .FunctionBZC import zpl_to_pdf_bzc
-from .functionOrders import checkFactoryApproval,checkClientApproval
+from .functionOrders import checkFactoryApproval,checkClientApproval,addClientData
 from .factory import updater_factory_info
-from .models import Furniture, Order, OrderProduct, Package, PackageFromClient,Transporter, Campaign,Factory
+from .models import Client,Furniture, Order, OrderB2C, OrderProduct, Package, PackageFromClient,Transporter, Campaign,Factory
+
+from django.http import JsonResponse
 
 from django.core.mail import EmailMessage
 
@@ -258,25 +260,42 @@ def fetchpimcore(request):
         
     return HttpResponse("Add and update data from PIM")
 
+def existOfdescriptionClients(value):
+    clients = Client.objects.all()
+    for client in clients:
+        if client.descriptionToFind in value:
+            return client
+    return False
+
 def make_order_from_Optima(request):
-    text=""
+    problems = []
     dic = make_dic_from_Optima()
     for nameOfOrder in dic:
-        name=nameOfOrder.replace("_","/")
+        name = nameOfOrder.replace("_","/")
         order = Order.objects.filter(name = name)
         country = country_to_2chars(dic[nameOfOrder]["country"])
         #to do if factory not exists
-        factory = Factory.objects.get(shortcut = name[-3:]) 
-        if country == None:
-            text = text + "Problem with country "+ dic[nameOfOrder]["country"] + " from " + nameOfOrder + "\n\n"
-
-        else:
+        if "SAV" in name or "CLM" in name:
+            problems.append([ "Order SAV ", nameOfOrder ])
+        elif "ATT" in name or "ATL" in name:
+            problems.append([ "Order ATL, ATT", nameOfOrder ])
+        elif Factory.objects.filter(shortcut = name[-3:]).count()==0:
+            problems.append([ "we can not find a factory",name[-3:]+ " from " + nameOfOrder ])
+        elif existOfdescriptionClients(dic[nameOfOrder]["description"]) == False and ("B2C" in name) == False:
+            problems.append([ "we can not find a client, Problem with description ", dic[nameOfOrder]["description"] + " from " + nameOfOrder ])
+        elif country == None:
+            try:
+                problems.append([ "Problem with country ", dic[nameOfOrder]["country"] + " from " + nameOfOrder ])
+            except:
+                problems.append([ "Probably no country ",  nameOfOrder ])
+        elif "ORD" in name or "CDE" in name:
             if order.exists()==False:
                 ord=Order(
                     name = name,
                     description = dic[nameOfOrder]["description"],
                     country = country,
-                    factory = factory
+                    factory = Factory.objects.get(shortcut = name[-3:]),
+                    client = existOfdescriptionClients(dic[nameOfOrder]["description"])
                 )
                 ord.save()
                 check = 0
@@ -288,24 +307,22 @@ def make_order_from_Optima(request):
                         ordProduct = OrderProduct.create(name,i,ref,qty)
                         ordProduct.save()
                     elif furniture.exists()==False:
-                        text = text + "Problem with ref "+ ref + " in " + nameOfOrder + "\n\n"
+                        problems.append([ "Problem with ref ", ref + " in " + nameOfOrder ])
                         check =1
                 if check == 1:
                     ord.delete()
-
-                        
 
             elif order.exists()==True:
                 order=order.first()
 
                 order.country = country
                 order.description = dic[nameOfOrder]["description"]
-                order.factory = factory
+                order.factory = Factory.objects.get(shortcut = name[-3:])
+                order.client = existOfdescriptionClients(dic[nameOfOrder]["description"])
                 order.save()
                 
                 if len(dic[nameOfOrder]["order"]) !=len (OrderProduct.objects.filter(order = order)):
-
-                    text = text + "Problem with order "+ nameOfOrder + ". Number of references : \n Optima:" + str(len(dic[nameOfOrder]["order"])) +"\n System:"+str(len(OrderProduct.objects.filter(order = order))) + "\n\n"
+                    problems.append([ "Problem with order "+nameOfOrder, "Number of references : In Optima:" + str(len(dic[nameOfOrder]["order"])) +", but in System:"+str(len(OrderProduct.objects.filter(order = order))) ])
      
                 else:
                     for i in dic[nameOfOrder]["order"]:
@@ -326,25 +343,78 @@ def make_order_from_Optima(request):
                             if ordProduct.exists() == True: 
                                 ordProduct = ordProduct.first()
                                 if ordProduct.quantity != qty:
-                                    text = text + "Problem with order "+ nameOfOrder + ". Change number od reference "+ ref +" : \n System:" + str(ordProduct.quantity) +"\n Optima:"+str(qty) + "\n\n"
-                
+                                    problems.append([ "Problem with order "+nameOfOrder, "Change number od reference "+ ref +" : System:" + str(ordProduct.quantity) +"Optima:"+str(qty) ])
+    
                                 elif ordProduct.ordinalNumber != i:
-                                    text = text+  "Problem with order "+ nameOfOrder + ". Change ordinal number od reference "+ ref +" : \n System:" + str(ordProduct.ordinalNumber)  +"\n Optima:"+str(i) + "\n\n"
-        
-                            else:
-                                text = text + "Problem with order "+ nameOfOrder + ". No reference "+ ref +" : in System, but we have in Optima." + "\n\n"
+                                    problems.append([ "Problem with order "+nameOfOrder,"Change ordinal number od reference "+ ref +" : System:" + str(ordProduct.ordinalNumber)  +" Optima:"+str(i) ])
 
-    # if text != "":
-    #     email = EmailMessage(
-    #             'IT- Problems import order from Optima',
-    #             text,
-    #             'from@example.com',
-    #             cc=["rafal.trachta@besolux.com","rafal.kornat@besolux.com"],
-    #             headers={'Message-ID': 'foo'},
-    #                                 )
-    #     email.send()                    
+                            else:
+                                problems.append([ "Problem with order "+nameOfOrder, "No reference "+ ref +" : in System, but we have in Optima." ])
+        elif "B2C" in name:
+            order = OrderB2C.objects.filter(name = name)
+            if order.exists()==False:
+                ord=OrderB2C(
+                    name = name,
+                    description = dic[nameOfOrder]["description"],
+                    country = country,
+                    factory = Factory.objects.get(shortcut = name[-3:]),
+                )
+                ord.save()
+                check = 0
+                for i in dic[nameOfOrder]["order"]:
+                    ref = dic[nameOfOrder]["order"][i]["REF"]
+                    qty = dic[nameOfOrder]["order"][i]["QTY"]
+                    furniture = Furniture.objects.filter(besoRef = ref)
+                    if furniture.exists()==True:
+                        ordProduct = OrderProduct.create(name,i,ref,qty)
+                        ordProduct.save()
+                    elif furniture.exists()==False:
+                        problems.append([ "Problem with ref ", ref + " in " + nameOfOrder ])
+                        check =1
+                if check == 1:
+                    ord.delete()
+
+            elif order.exists()==True:
+                order=order.first()
+
+                order.country = country
+                order.description = dic[nameOfOrder]["description"]
+                order.factory = Factory.objects.get(shortcut = name[-3:])
+                order.save()
                 
-    return HttpResponse("Add orders")
+                if len(dic[nameOfOrder]["order"]) !=len (OrderProduct.objects.filter(order = order)):
+                    problems.append([ "Problem with order "+nameOfOrder, "Number of references : In Optima:" + str(len(dic[nameOfOrder]["order"])) +", but in System:"+str(len(OrderProduct.objects.filter(order = order))) ])
+     
+                else:
+                    for i in dic[nameOfOrder]["order"]:
+                        ref = dic[nameOfOrder]["order"][i]["REF"]
+                        qty = dic[nameOfOrder]["order"][i]["QTY"]
+                        furniture = Furniture.objects.get(besoRef = ref)
+                        ordProduct = OrderProduct.objects.filter(
+                            order = order,
+                            furniture = furniture,
+                            quantity = qty,
+                            ordinalNumber = i)
+                       
+                        if ordProduct.exists() == False:
+                            ordProduct = OrderProduct.objects.filter(
+                            order = order,
+                            furniture = furniture
+                            )
+                            if ordProduct.exists() == True: 
+                                ordProduct = ordProduct.first()
+                                if ordProduct.quantity != qty:
+                                    problems.append([ "Problem with order "+nameOfOrder, "Change number od reference "+ ref +" : System:" + str(ordProduct.quantity) +"Optima:"+str(qty) ])
+    
+                                elif ordProduct.ordinalNumber != i:
+                                    problems.append([ "Problem with order "+nameOfOrder,"Change ordinal number od reference "+ ref +" : System:" + str(ordProduct.ordinalNumber)  +" Optima:"+str(i) ])
+
+                            else:
+                                problems.append([ "Problem with order "+nameOfOrder, "No reference "+ ref +" : in System, but we have in Optima." ])
+        
+    
+    df_html = pd.DataFrame(problems,columns=["type of problem","content of the problem"]).to_html()
+    return HttpResponse(df_html)
 
 def label_campaign(request,campaign):
     undone = []
@@ -376,23 +446,23 @@ def make_label(request):
     setorder = Order.objects.exclude(is_made = True).filter(clientApproval = True).filter(factoryApproval = True)
     print(setorder)
     done = []
-    for a in setorder:
-        orderProducts = OrderProduct.objects.filter(order=a)
+    for order in setorder:
+        orderProducts = OrderProduct.objects.filter(order=order)
         x = Package.objects.filter(orderProduct__in = orderProducts)
         set=[]
         for i in x:
             z=Label(i)
             set.append(z)
 
-        label_pdf = FormatLabel(set,a.name.replace("/","_"),factory_info = a.factory_info)
+        label_pdf = FormatLabel(set)
         
         if label_pdf.is_made == 1:
-            a.is_made = True
-            with open("done_label"+"\\"+"10x20 etykiety_" + a.name.replace("/","_") + ".pdf", 'rb') as f:
-                a.label=  File(f,"done_label"+"\\"+"10x20 etykiety_" + a.name.replace("/","_") + ".pdf")
-                a.save()
+            order.is_made = True
+            with open("done_label\\"+ order.name.replace("/","_")+"\\"+order.factory.typeOfLabel+" etykiety_" + order.name.replace("/","_") + ".pdf", 'rb') as f:
+                order.label=  File(f,"done_label\\"+ order.name.replace("/","_")+"\\"+"10x20 etykiety_" + order.name.replace("/","_") + ".pdf")
+                order.save()
         else:
-            done.append(a)
+            done.append(order)
     
     return HttpResponse("we did: " + str(done))
 
@@ -573,60 +643,19 @@ def check_approval_status(request):
     allOrders = Order.objects.all()
     checkFactoryApproval(allOrders)
     checkClientApproval(allOrders)
+    allOrdersB2C = OrderB2C.objects.all()
+    checkFactoryApproval(allOrdersB2C)
+    # checkClientApproval(allOrdersB2C)
+    addClientData(allOrdersB2C)
+    print("test")
     return HttpResponse("done")
 
 
-class FurnitureShow(SingleTableMixin, FilterView):
-    model = Furniture
-    queryset = Furniture.objects.all()
-    table_class = FurnitureTable
-    template_name = "order2.html"
-
-    filterset_class = FurnitureFilter
-
-class OrderShow(SingleTableMixin, FilterView):
-    model = Order
-    queryset = Order.objects.all()
-    table_class = OrderTable
-    template_name = "order2.html"
-
-    filterset_class = OrderFilter
-
-class CampaignShow(SingleTableMixin, FilterView):
-    model = Campaign
-    queryset = Campaign.objects.all()
-    table_class = CampaignTable
-    template_name = "order2.html"
-
-    filterset_class = CampaignFilter
-
-class PackageFromClientShow(SingleTableMixin, FilterView):
-    model = PackageFromClient
-    table_class = PackageFromClientTable
-    template_name = "order2.html"
-
-    filterset_class = PackageFromClientFilter
-
-    def get_queryset(self):
-        pk = self.kwargs['pk']
-        campaign = Campaign.objects.get(pk=pk)
-        return PackageFromClient.objects.filter(campaign=campaign)
-
-class OrderProductShow(SingleTableView):
-    model = OrderProduct
-    table_class = OrderProductTable
-    template_name = "order.html"
-    def get_queryset(self):
-        pk = self.kwargs['pk']
-        order = Order.objects.get(pk=pk)
-        return OrderProduct.objects.filter(order=order)
-
-class PackageShow(SingleTableView):
-    model = Package
-    table_class = PackageTable
-    template_name = "order.html"
-    def get_queryset(self):
-        pk = self.kwargs['pk']
-        order = Order.objects.get(pk=pk)
-        orderProduct = OrderProduct.objects.filter(order = order)
-        return Package.objects.filter(orderProduct__in = orderProduct)
+# class OfferUpdateFormView(UpdateView):
+#     model = OrderB2C
+#     template_name = 'form.html'
+#     form_class = OrderB2CForm
+ 
+#     def form_valid(self, form):
+#         form.save()
+#         return redirect("")

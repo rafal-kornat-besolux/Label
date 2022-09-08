@@ -14,9 +14,7 @@ def labels_10x15(i,x=145, y=100):
     # fLabels.frame_of_labels(pdf, y, x)
 
     number = i.ean
-
-    
-
+    make_Code128(pdf, number, 5, 5,write_text=True)
     #vertical lines
     pdf.line(60, 60, 60, 100)
     pdf.line(30, 80, 30, 100)
@@ -29,7 +27,6 @@ def labels_10x15(i,x=145, y=100):
 
     logo(pdf,i.brand, 65, 61)
 
-    make_Code128(pdf, number, 5, 3)
 
 
     #set font Arial, Bold, 9pt
@@ -103,12 +100,6 @@ def labels_10x15(i,x=145, y=100):
     pdf.set_font('Arial', 'B', size=18)
     pdf.set_xy(40, 93)
     pdf.cell(w=0, align="c", txt=tekst)
-
-    #EAN
-
-    pdf.set_font('Arial', 'B', 7)
-    pdf.set_xy(18, 24)
-    pdf.cell(w=0, align="L", txt=str(i.ean))
 
     #ref
     pdf.set_font('Arial', "B", size=fit2(

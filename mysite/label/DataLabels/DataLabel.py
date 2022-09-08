@@ -1,10 +1,7 @@
 from label.models import Package
-from .B2B import function_B2B
-from .Factory import factories_specifications
 
 
 class Label:
-
     def __init__(self, package):
         #From model Package
         self.qty = package.quantity
@@ -12,6 +9,7 @@ class Label:
         self.ordN = package.ordinalNumber
         self.uniqueBesoCode = package.codeBeso
         self.uniquefactoryCode = package.codeFactory
+        self.infoFactory = package.infoFactory
 
         #From model OrderProduct
         #From model Order
@@ -31,41 +29,20 @@ class Label:
         self.legsPlacement = package.orderProduct.furniture.legsPlacement
         self.packagesQuantity = package.orderProduct.furniture.packagesQuantity
 
-        self.type_label = 0
+
+        #From model Factory
+        self.typeOfLabel = package.orderProduct.order.factory.typeOfLabel
+        self.orderRequirement = package.orderProduct.order.factory.orderRequirement
+        self.labelInfoRequirement = package.orderProduct.order.factory.labelInfoRequirement
+        self.labelCodeRequirement = package.orderProduct.order.factory.labelCodeRequirement
+        self.factoryReferenceRequirement = package.orderProduct.order.factory.factoryReferenceRequirement
         
-        # 1 - universal
-        # 2 - VP
-        self.factory_details = 0
-
-
-        self.client = ""
-
-        if package.infoFactory != "None":
-            self.infoFactory = package.infoFactory
-        else:
-            self.infoFactory = ""
+        #From model Client
+        self.clientName = package.orderProduct.order.client.name
+        self.typeClient = package.orderProduct.order.client.type
+        self.transporter = package.orderProduct.order.client.transporter
         
-        if package.codeFactory != "None":
-            self.codeFactory = package.codeFactory
-        else:
-            self.codeFactory = ""
-        
-        self = factories_specifications(self,package)
-
-        if self.factory_details == 1:
- 
-            if function_B2B(self.description) != False:
-                self.description = function_B2B(self.description)
-                self.type_label = 1
-            elif self.order[:3]=="ORD" and ("VP" in self.description):
-                
-                #print(package.packageFromClient)
-                self.client = package.packageFromClient.number
-                self.type_label = 2
-            elif self.order[:3]=="ORD" and ("BZC" in self.description):
-                
-                #print(package.packageFromClient)
-                self.client = package.packageFromClient.number
-                self.type_label = 2  
-        else:
-            print(self.factory_details)
+        #From model PackageFromClient
+        if package.orderProduct.order.client.is_campaign == True:
+            self.campaign = package.packageFromClient.campaign
+            self.packageFromClient = package.packageFromClient.number

@@ -8,12 +8,12 @@ import tkinter
 from tkinter import font as tkFont
 from . DictOfLabels import logos_label
 
-def make_Code128(pdf,number, x, y, w=50, h=20):
+def make_Code128(pdf,number, x, y, w=50, h=20,write_text=False):
     number=str(number)
     code_128=barcode.get('code128', number, writer=ImageWriter())
     number=number.replace("/","_").replace("*","")
     filename=number
-    code_128.save("working_labels/code"+"\\"+filename, {"module_width":0.35, "module_height":10, "font_size": 18, "text_distance": 1, "quiet_zone": 3,"write_text": False})
+    code_128.save("working_labels/code"+"\\"+filename, {"module_width":0.35, "module_height":10, "font_size": 18, "text_distance": 1, "quiet_zone": 3,"write_text": write_text})
 
     pdf.set_xy(x, y)
 

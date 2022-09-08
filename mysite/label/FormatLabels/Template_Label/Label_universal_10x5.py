@@ -12,17 +12,25 @@ def labels_10x5(i):
 
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=0.0)
-    if i.uniquefactoryCode == "None":
-        code = str(i.uniqueBesoCode)
-        make_Code128(pdf, number=i.uniqueBesoCode, x=0, y=39,w=100,h=10)
-    else:
-        code = str(i.uniquefactoryCode)
-        make_Code128(pdf, number=i.uniquefactoryCode, x=0, y=39,w=100,h=10)
 
-    pdf.set_font('DejaVu', 'B', 12)
-    text = code
-    pdf.set_xy(0, 33)
-    pdf.cell(w=90,h=7, align="C", txt=text)
+    if i.labelCodeRequirement ==True:
+        make_Code128(pdf, number=i.uniquefactoryCode, x=0, y=39,w=100,h=10)
+        pdf.set_font('DejaVu', 'B', 12)
+        pdf.set_xy(0, 33)
+        pdf.cell(w=90,h=7, align="C", txt=str(i.uniquefactoryCode))
+
+    elif i.labelCodeRequirement == False:
+        make_Code128(pdf, number=i.uniqueBesoCode, x=0, y=39,w=100,h=10)
+        pdf.set_font('DejaVu', 'B', 12)
+        pdf.set_xy(0, 33)
+        pdf.cell(w=90,h=7, align="C", txt=str(i.uniqueBesoCode))
+
+
+
+    # pdf.set_font('DejaVu', 'B', 12)
+    # text = code
+    # pdf.set_xy(0, 33)
+    # pdf.cell(w=90,h=7, align="C", txt=text)
     
 
     # fLabels.frame_of_labels(pdf, 50, 100)
@@ -42,15 +50,12 @@ def labels_10x5(i):
 
     #pdf.set_xy(2, 2)
     #pdf.cell(w=0, align="L", txt="Reference")
-    pdf.set_xy(2, 13)
+    pdf.set_xy(2, 12)
     pdf.cell(w=0, align="L", txt="Packages")
-    pdf.set_xy(15, 13)
+    pdf.set_xy(15, 12)
     pdf.cell(w=0, align="L", txt="Quantity")
-    pdf.set_xy(28, 13)
+    pdf.set_xy(28, 12)
     pdf.cell(w=0, align="L", txt="LP")
-
-    
-    
 
     text = str(i.besoRef)
     pdf.set_font('Arial', 'B', fit2(70, 7, text, 'Arial'))
@@ -72,7 +77,7 @@ def labels_10x5(i):
         28, 10, text, 'DejaVu'))
     pdf.cell(w=30, h=10, align="C", txt=text)
 
-    if "BEX" in i.order:
+    if i.factoryReferenceRequirement == True:
         pdf.set_xy(1, 23)
         text = i.factoryRef
         pdf.set_font('DejaVu', '', fit2(
@@ -85,14 +90,12 @@ def labels_10x5(i):
     #     pdf.cell(w=33, h=4, align="C", txt=text)
 
     pdf.set_xy(1, 28)
-    text = i.fabric
-    if text != "nan":
+    
+    if i.fabric != "nan":
+        text = i.fabric
         pdf.set_font('DejaVu', 'B', fit2(
             32, 5, text, 'DejaVu'))
         pdf.cell(w=33, h=5, align="C", txt=text)
-
-
-    
 
     text = str(i.pack)+"/"+str(i.packagesQuantity)
 
@@ -122,43 +125,11 @@ def labels_10x5(i):
     pdf.set_xy(0, 0)
     pdf.set_xy(35, 22)
 
-    if i.infoFactory!="":
+    if i.labelInfoRequirement == True:
         text = i.infoFactory
         pdf.set_font('DejaVu', 'B', fit2(30, 10, text, 'DejaVu'))
         pdf.cell(w=35, h=11, align="C", txt=text)
-    elif i.order[:3] == "DAS":
-        text = i.ean
-        pdf.set_font('DejaVu', 'B', fit2(30, 10, text, 'DejaVu'))
-        pdf.cell(w=35, h=11, align="C", txt=text)
-        
-    # vr = 0
-    # try:
-    if "DAS" in i.order:
-        text = str(i.ean)
-        pdf.set_font('DejaVu', 'B', fit2(
-            30, 10, text, 'DejaVu'))
-        pdf.cell(w=35, h=11, align="C", txt=text)
-    #         vr = 1
-    #     elif df["ORDER"][0][-3:] == "CPT":
-    #         if "," in df["FABRIC"][i]:
-    #             text = str(df["FABRIC"][i].split(",")[1])
-    #             vr = 1
-    #     else:
-    #         if ("SetNo" in df.columns) == True:
-    #             text = str(df["SetNo"][i])
-    #             vr = 1
-    #         elif ("seria" in df.columns) == True:
 
-    #             if df["seria"].isnull()[i] != True:
-    #                 text = str(df["seria"][i])
-    #                 vr = 1
-    # except:
-    #     vr = 0
-
-    # if vr == 1:
-    #     pdf.set_font('DejaVu', 'B', fLabels.fit2(
-    #         30, 10, text, 'DejaVu'))
-    #     pdf.cell(w=35, h=11, align="C", txt=text)
     frame_of_labels(pdf,50,100)
 
     return pdf
